@@ -1,204 +1,475 @@
-import { StrictMode, useState } from "react";
+import { StrictMode, useEffect, useRef, useState, type ReactNode } from "react";
 import { createRoot } from "react-dom/client";
-import {
-  DurationRange,
-  TimeRange,
-  TwinRange,
-  formatDuration,
-  formatTime,
-  type RangeValue,
-} from "twin-range";
+import { DurationRange, TimeRange, TwinRange, type RangeValue } from "twin-range";
 import "twin-range/styles.css";
+import pkg from "../package.json";
+import { cssVars, helpers, keys, presetDefaults, twinRangeProps, type Row } from "./api";
+import { FilterPanel } from "./FilterPanel";
+
+const REPO = "https://github.com/devAIDY/twin-range";
+const NPM = "https://www.npmjs.com/package/twin-range";
 
 const money = (v: number) => `$${v.toLocaleString("en-US")}`;
 
-type FilterKey = "price" | "departure" | "duration" | "layover";
+/* ---------------- small building blocks ---------------- */
 
-const FILTERS: Record<FilterKey, { title: string; format: (v: number) => string; initial: RangeValue }> = {
-  price: { title: "Price", format: money, initial: [150, 1600] },
-  departure: { title: "Departure time", format: formatTime, initial: [360, 1080] },
-  duration: { title: "Trip duration", format: formatDuration, initial: [300, 900] },
-  layover: { title: "Layover", format: formatDuration, initial: [60, 120] },
-};
-
-interface LogEntry {
-  id: number;
-  filter: FilterKey;
-  value: RangeValue;
+function CopyButton({ text }: { text: string }) {
+  const [copied, setCopied] = useState(false);
+  const copy = async () => {
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
+    } catch {
+      // Clipboard can be blocked (http, permissions). The code is still selectable.
+    }
+  };
+  return (
+    <button type="button" className="copy" onClick={copy}>
+      {copied ? "Copied" : "Copy"}
+    </button>
+  );
 }
 
-function FilterPanel({
-  disabled = false,
-  onCommit,
-}: {
-  disabled?: boolean;
-  onCommit?: (filter: FilterKey, value: RangeValue) => void;
-}) {
-  const [values, setValues] = useState(
-    () => Object.fromEntries(Object.entries(FILTERS).map(([k, f]) => [k, f.initial])) as Record<FilterKey, RangeValue>,
-  );
-
-  const bind = (key: FilterKey) => ({
-    value: values[key],
-    onChange: (v: RangeValue) => setValues((prev) => ({ ...prev, [key]: v })),
-    onChangeEnd: (v: RangeValue) => onCommit?.(key, v),
-    disabled,
-  });
-
-  const heading = (key: FilterKey, note: string) => (
-    <h3>
-      {FILTERS[key].title} <span>{note}</span>
-    </h3>
-  );
-
+function Code({ children, label }: { children: string; label?: string }) {
   return (
-    <div className="panel">
-      <div className="filter">
-        {heading("price", "per person")}
-        <TwinRange
-          className="is-price"
-          min={89}
-          max={2400}
-          minDistance={1}
-          formatLabel={money}
-          ariaLabel={["Minimum price", "Maximum price"]}
-          {...bind("price")}
-        />
-      </div>
-      <div className="filter">
-        {heading("departure", "TimeRange")}
-        <TimeRange minDistance={15} {...bind("departure")} />
-      </div>
-      <div className="filter">
-        {heading("duration", "DurationRange")}
-        <DurationRange min={120} max={1800} {...bind("duration")} />
-      </div>
-      <div className="filter">
-        {heading("layover", "DurationRange")}
-        <DurationRange min={30} max={720} step={15} minDistance={15} {...bind("layover")} />
-      </div>
+    <div className="code">
+      {label && <div className="code-label">{label}</div>}
+      <pre>
+        <code>{children}</code>
+      </pre>
+      <CopyButton text={children} />
     </div>
   );
 }
 
-function CopyInstall() {
-  const [copied, setCopied] = useState(false);
-  const copy = async () => {
+const MANAGERS = {
+  npm: "npm install twin-range",
+  yarn: "yarn add twin-range",
+  pnpm: "pnpm add twin-range",
+} as const;
+type Manager = keyof typeof MANAGERS;
+
+function readManager(): Manager {
+  try {
+    const saved = localStorage.getItem("twin-range:pm");
+    if (saved && saved in MANAGERS) return saved as Manager;
+  } catch {
+    // storage unavailable
+  }
+  return "npm";
+}
+
+function Install() {
+  const [pm, setPm] = useState<Manager>(readManager);
+  const choose = (next: Manager) => {
+    setPm(next);
     try {
-      await navigator.clipboard.writeText("npm install twin-range");
-      setCopied(true);
-      setTimeout(() => setCopied(false), 1600);
+      localStorage.setItem("twin-range:pm", next);
     } catch {
-      // Clipboard can be blocked (insecure origin, permissions); the command is still visible.
+      // storage unavailable
     }
   };
   return (
     <div className="install">
-      <code>npm install twin-range</code>
-      <button type="button" onClick={copy}>
-        {copied ? "Copied" : "Copy"}
-      </button>
+      <div className="tabs" role="tablist" aria-label="Package manager">
+        {(Object.keys(MANAGERS) as Manager[]).map((m) => (
+          <button
+            key={m}
+            type="button"
+            role="tab"
+            aria-selected={pm === m}
+            className="tab"
+            onClick={() => choose(m)}
+          >
+            {m}
+          </button>
+        ))}
+      </div>
+      <div className="code code--install">
+        <pre>
+          <code>{MANAGERS[pm]}</code>
+        </pre>
+        <CopyButton text={MANAGERS[pm]} />
+      </div>
     </div>
   );
 }
 
-function App() {
-  const [hero, setHero] = useState<RangeValue>([180, 640]);
-  const [disabled, setDisabled] = useState(false);
-  const [dark, setDark] = useState(startDark);
-  const [log, setLog] = useState<LogEntry[]>([]);
-
-  const toggleDark = (on: boolean) => {
-    setDark(on);
-    document.documentElement.dataset.theme = on ? "dark" : "light";
-  };
-
-  const commit = (filter: FilterKey, value: RangeValue) =>
-    setLog((prev) => [{ id: Date.now() + Math.random(), filter, value }, ...prev].slice(0, 7));
-
+function Example({
+  id,
+  title,
+  children,
+  note,
+  code,
+  css,
+}: {
+  id: string;
+  title: string;
+  children: ReactNode;
+  note?: ReactNode;
+  code: string;
+  css?: string;
+}) {
   return (
-    <main className="page">
-      <header className="hero">
-        <h1>twin-range</h1>
-        <p className="lede">
-          A React range slider with two thumbs. Each thumb carries its value, and when the two labels
-          run into each other they join into one.
-        </p>
-        <CopyInstall />
-
-        <div className="hero-stage">
-          <TwinRange
-            className="hero-slider"
-            min={0}
-            max={1000}
-            step={10}
-            value={hero}
-            onChange={setHero}
-            formatLabel={money}
-            ariaLabel={["Minimum budget", "Maximum budget"]}
-          />
-        </div>
-        <p className="hero-hint">Drag the thumbs toward each other.</p>
-      </header>
-
-      <section className="workbench" aria-label="Examples">
-        <div>
-          <h2>As a flight filter</h2>
-          <p className="sub">The sliders this package was built for, with their default look.</p>
-          <FilterPanel disabled={disabled} onCommit={commit} />
-          <div className="controls">
-            <label className="switch">
-              <input type="checkbox" checked={disabled} onChange={(e) => setDisabled(e.target.checked)} />
-              Disable filters
-            </label>
-            <label className="switch">
-              <input type="checkbox" checked={dark} onChange={(e) => toggleDark(e.target.checked)} />
-              Dark theme
-            </label>
-          </div>
-        </div>
-
-        <div>
-          <h2>What your code receives</h2>
-          <p className="sub">
-            <code>onChangeEnd</code> fires once when you let go, so you can fetch results then
-            instead of on every pixel.
-          </p>
-          <ul className="log" aria-live="polite">
-            {log.length === 0 && <li className="log-empty">Move a filter to see its value here.</li>}
-            {log.map((entry) => {
-              const { title, format } = FILTERS[entry.filter];
-              return (
-                <li key={entry.id}>
-                  <span className="what">{title}</span>
-                  <span className="value">
-                    {format(entry.value[0])} – {format(entry.value[1])}
-                  </span>
-                </li>
-              );
-            })}
-          </ul>
-          <p className="keys">
-            Keyboard: <kbd>Tab</kbd> to a thumb, then <kbd>←</kbd> <kbd>→</kbd> to step,{" "}
-            <kbd>PgUp</kbd> <kbd>PgDn</kbd> for bigger steps, <kbd>Home</kbd> <kbd>End</kbd> to jump
-            to the ends.
-          </p>
-        </div>
-      </section>
-    </main>
+    <section className="example" id={id} aria-labelledby={`${id}-title`}>
+      <h3 id={`${id}-title`}>
+        <a href={`#${id}`}>{title}</a>
+      </h3>
+      {note && <p>{note}</p>}
+      <div className="preview">{children}</div>
+      <Code label={css ? "TSX" : undefined}>{code}</Code>
+      {css && <Code label="CSS">{css}</Code>}
+    </section>
   );
 }
 
-// `?shot` renders just the filter panel, used to make the README screenshot.
-// `?dark` starts in the dark theme.
+function Table({ rows, head }: { rows: Row[]; head: [string, string, string] | [string, string] }) {
+  const hasType = head.length === 3 && rows.some((r) => r.type);
+  return (
+    <div className="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            {head.map((h) => (
+              <th key={h}>{h}</th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map((r) => (
+            <tr key={r.name}>
+              <td>
+                <code>{r.name}</code>
+                {hasType && r.type && <div className="type">{r.type}</div>}
+              </td>
+              {head.length === 3 && <td>{r.def && <code>{r.def}</code>}</td>}
+              <td>{r.desc}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+/* ---------------- live examples ---------------- */
+
+function PriceExample() {
+  const [price, setPrice] = useState<RangeValue>([150, 1600]);
+  const [ended, setEnded] = useState<RangeValue | null>(null);
+  return (
+    <>
+      <TwinRange
+        min={89}
+        max={2400}
+        value={price}
+        onChange={setPrice}
+        onChangeEnd={setEnded}
+        formatLabel={money}
+      />
+      <p className="readout">
+        onChange: {money(price[0])} – {money(price[1])}
+        <br />
+        onChangeEnd: {ended ? `${money(ended[0])} – ${money(ended[1])}` : "not called yet"}
+      </p>
+    </>
+  );
+}
+
+/* ---------------- page ---------------- */
+
+const NAV: [string, string][] = [
+  ["install", "Install"],
+  ["basic", "Basic"],
+  ["controlled", "Controlled"],
+  ["merging", "Merging labels"],
+  ["time", "TimeRange"],
+  ["duration", "DurationRange"],
+  ["styling", "Styling"],
+  ["disabled", "Disabled"],
+  ["props", "Props"],
+  ["presets", "Presets and helpers"],
+  ["css", "CSS variables"],
+  ["keyboard", "Keyboard"],
+];
+
+const NAV_IDS = NAV.map(([id]) => id);
+
+/**
+ * Which section the reader is in: the last one whose top has passed just below the top bar.
+ * A clicked link stays highlighted until the reader scrolls themselves, because sections near
+ * the bottom can't scroll up to the top bar.
+ */
+function useActiveSection(ids: string[]) {
+  const [active, setActive] = useState(ids[0]!);
+  const lockRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    let frame = 0;
+    const update = () => {
+      frame = 0;
+      if (lockRef.current) return setActive(lockRef.current);
+      let current = ids[0]!;
+      for (const id of ids) {
+        const top = document.getElementById(id)?.getBoundingClientRect().top;
+        if (top !== undefined && top <= 120) current = id;
+      }
+      const atBottom = window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 2;
+      setActive(atBottom ? ids[ids.length - 1]! : current);
+    };
+    const onScroll = () => {
+      if (!frame) frame = requestAnimationFrame(update);
+    };
+    const unlock = () => {
+      lockRef.current = null;
+    };
+    update();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    window.addEventListener("resize", onScroll);
+    // Only the reader's own scrolling releases a clicked link.
+    for (const type of ["wheel", "touchmove", "keydown"]) window.addEventListener(type, unlock, { passive: true });
+    return () => {
+      cancelAnimationFrame(frame);
+      window.removeEventListener("scroll", onScroll);
+      window.removeEventListener("resize", onScroll);
+      for (const type of ["wheel", "touchmove", "keydown"]) window.removeEventListener(type, unlock);
+    };
+  }, [ids]);
+
+  const select = (id: string) => {
+    lockRef.current = id;
+    setActive(id);
+  };
+  return [active, select] as const;
+}
+
+function App() {
+  const [active, select] = useActiveSection(NAV_IDS);
+
+  // The page renders after the browser has tried to jump to the URL's #section,
+  // so links like …/#props would open at the top. Jump once the content exists.
+  useEffect(() => {
+    const id = decodeURIComponent(location.hash.slice(1));
+    if (!id) return;
+    document.getElementById(id)?.scrollIntoView();
+    if (NAV_IDS.includes(id)) select(id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  return (
+    <>
+      <header className="topbar">
+        <a className="brand" href="#top">
+          twin-range <span className="version">v{pkg.version}</span>
+        </a>
+        <nav className="toplinks" aria-label="Project links">
+          <a href={REPO}>GitHub</a>
+          <a href={NPM}>npm</a>
+        </nav>
+      </header>
+
+      <div className="layout" id="top">
+        <aside className="sidebar">
+          <nav aria-label="On this page">
+            {NAV.map(([id, label]) => (
+              <a
+                key={id}
+                href={`#${id}`}
+                aria-current={active === id ? "location" : undefined}
+                onClick={() => select(id)}
+              >
+                {label}
+              </a>
+            ))}
+          </nav>
+        </aside>
+
+        <main className="content">
+          <h1>twin-range</h1>
+          <p className="intro">
+            A two-thumb range slider for React. Each thumb shows its value above it, and when the two
+            labels would overlap they merge into one. Works with mouse, touch and keyboard, renders
+            on the server, and has no dependencies.
+          </p>
+
+          <section id="install">
+            <h2>Install</h2>
+            <Install />
+            <p>
+              Import the stylesheet once, anywhere in your app. Requires React 18 or later.
+            </p>
+            <Code>{`import "twin-range/styles.css";`}</Code>
+          </section>
+
+          <h2 className="group-title">Examples</h2>
+
+          <Example
+            id="basic"
+            title="Basic"
+            note="Uncontrolled: pass a starting value and read results from the callbacks."
+            code={`import { TwinRange } from "twin-range";
+
+<TwinRange defaultValue={[20, 80]} />`}
+          >
+            <TwinRange defaultValue={[20, 80]} />
+          </Example>
+
+          <Example
+            id="controlled"
+            title="Controlled, with formatted labels"
+            note={
+              <>
+                <code>onChange</code> fires while dragging; <code>onChangeEnd</code> fires once when
+                you let go, which is the moment to fetch results.
+              </>
+            }
+            code={`const [price, setPrice] = useState<[number, number]>([150, 1600]);
+
+<TwinRange
+  min={89}
+  max={2400}
+  value={price}
+  onChange={setPrice}
+  onChangeEnd={(range) => searchFlights({ price: range })}
+  formatLabel={(v) => \`$\${v.toLocaleString("en-US")}\`}
+/>`}
+          >
+            <PriceExample />
+          </Example>
+
+          <Example
+            id="merging"
+            title="Merging labels"
+            note="These start close enough to share one label. Drag them apart and it splits in two."
+            code={`<TwinRange
+  defaultValue={[44, 52]}
+  formatLabel={(v) => \`\${v} km\`}
+  formatMergedLabel={(low, high) => \`\${low}–\${high} km\`}
+/>`}
+          >
+            <TwinRange
+              defaultValue={[44, 52]}
+              formatLabel={(v) => `${v} km`}
+              formatMergedLabel={(low, high) => `${low}–${high} km`}
+            />
+          </Example>
+
+          <Example
+            id="time"
+            title="TimeRange"
+            note={
+              <>
+                Values are minutes since midnight (<code>360</code> is 6:00 AM). Defaults to the
+                whole day in 15-minute steps. <code>showBounds</code> adds the fixed end labels.
+              </>
+            }
+            code={`import { TimeRange } from "twin-range";
+
+<TimeRange defaultValue={[360, 1080]} showBounds />`}
+          >
+            <TimeRange defaultValue={[360, 1080]} showBounds />
+          </Example>
+
+          <Example
+            id="duration"
+            title="DurationRange"
+            note="Values are minutes, shown as hours and minutes. The same component covers trip length and layover time."
+            code={`import { DurationRange } from "twin-range";
+
+// Trip duration: 2 to 30 hours
+<DurationRange min={120} max={1800} defaultValue={[300, 900]} />
+
+// Layover: 30 minutes to 12 hours
+<DurationRange min={30} max={720} step={15} minDistance={15} defaultValue={[60, 240]} />`}
+          >
+            <div className="stack">
+              <div>
+                <div className="caption">Trip duration</div>
+                <DurationRange min={120} max={1800} defaultValue={[300, 900]} />
+              </div>
+              <div>
+                <div className="caption">Layover</div>
+                <DurationRange min={30} max={720} step={15} minDistance={15} defaultValue={[60, 240]} />
+              </div>
+            </div>
+          </Example>
+
+          <Example
+            id="styling"
+            title="Styling"
+            note={
+              <>
+                Every colour and size is a CSS variable. Set them on your own class; see{" "}
+                <a href="#css">CSS variables</a> for the full list.
+              </>
+            }
+            code={`<TwinRange className="teal-range" defaultValue={[25, 60]} />`}
+            css={`.teal-range {
+  --tr-track-height: 8px;
+  --tr-fill-color: #0f766e;
+  --tr-thumb-size: 28px;
+  --tr-thumb-border: 3px solid #0f766e;
+  --tr-label-bg: #0f766e;
+  --tr-label-color: #ffffff;
+  --tr-label-border: 0;
+  --tr-label-radius: 999px;
+  --tr-label-padding: 4px 10px;
+}`}
+          >
+            <TwinRange className="teal-range" defaultValue={[25, 60]} />
+          </Example>
+
+          <Example id="disabled" title="Disabled" code={`<TwinRange defaultValue={[30, 70]} disabled />`}>
+            <TwinRange defaultValue={[30, 70]} disabled />
+          </Example>
+
+          <h2 className="group-title">API</h2>
+
+          <section id="props">
+            <h3>TwinRange props</h3>
+            <Table head={["Prop", "Default", "Description"]} rows={twinRangeProps} />
+          </section>
+
+          <section id="presets">
+            <h3>TimeRange and DurationRange</h3>
+            <p>
+              Both accept every <code>TwinRange</code> prop. Only the defaults differ:
+            </p>
+            <Table head={["Component", "Defaults", "Values"]} rows={presetDefaults} />
+            <h3>Helpers</h3>
+            <Table head={["Function", "Example", "Result"]} rows={helpers} />
+          </section>
+
+          <section id="css">
+            <h3>CSS variables</h3>
+            <Table head={["Variable", "Default", "Controls"]} rows={cssVars} />
+          </section>
+
+          <section id="keyboard">
+            <h3>Keyboard</h3>
+            <p>Tab to a thumb, then:</p>
+            <Table head={["Key", "Action"]} rows={keys} />
+          </section>
+
+          <footer className="footer">
+            Made by Ankit Yadav. Released under the MIT License.{" "}
+            <a href={REPO}>Source on GitHub</a>.
+          </footer>
+        </main>
+      </div>
+    </>
+  );
+}
+
+// `?shot` renders only the flight-filter panel, used for the README screenshot.
+// `?dark` gives that panel a dark background.
 const params = new URLSearchParams(location.search);
-const shot = params.has("shot");
-const startDark = params.has("dark");
-if (startDark) document.documentElement.dataset.theme = "dark";
+if (params.has("shot")) document.documentElement.dataset.shot = params.has("dark") ? "dark" : "light";
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
-    {shot ? (
+    {params.has("shot") ? (
       <div className="shot">
         <FilterPanel />
       </div>

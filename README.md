@@ -21,6 +21,10 @@ To try it yourself, clone the repo and run `npm install && npm run demo`.
 
 ```sh
 npm install twin-range
+# or
+yarn add twin-range
+# or
+pnpm add twin-range
 ```
 
 Requires React 18 or later.
