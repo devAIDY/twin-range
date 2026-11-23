@@ -1,0 +1,74 @@
+{
+  "name": "twin-range",
+  "version": "0.1.0",
+  "description": "React dual-thumb range slider with floating value labels that auto-merge on overlap",
+  "keywords": [
+    "react",
+    "range",
+    "slider",
+    "dual",
+    "two-thumb",
+    "range-slider",
+    "input-range"
+  ],
+  "license": "MIT",
+  "author": "Ankit Yadav",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/devAIDY/twin-range.git"
+  },
+  "homepage": "https://github.com/devAIDY/twin-range#readme",
+  "bugs": "https://github.com/devAIDY/twin-range/issues",
+  "type": "module",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.js"
+      },
+      "require": {
+        "types": "./dist/index.d.cts",
+        "default": "./dist/index.cjs"
+      }
+    },
+    "./styles.css": "./dist/styles.css",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "dist"
+  ],
+  "sideEffects": [
+    "**/*.css"
+  ],
+  "scripts": {
+    "build": "tsup && node -e \"require('fs').copyFileSync('src/styles.css','dist/styles.css')\"",
+    "dev": "tsup --watch",
+    "demo": "vite --config demo/vite.config.ts",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "typecheck": "tsc --noEmit",
+    "prepublishOnly": "npm run typecheck && npm test && npm run build"
+  },
+  "peerDependencies": {
+    "react": ">=18",
+    "react-dom": ">=18"
+  },
+  "devDependencies": {
+    "@testing-library/jest-dom": "^8.0.0",
+    "@testing-library/react": "^16.3.3",
+    "@testing-library/user-event": "^14.6.13",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "@vitejs/plugin-react": "^6.3.0",
+    "jsdom": "^31.0.1",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1",
+    "tsup": "^9.0.0",
+    "typescript": "^6.0.3",
+    "vite": "^8.3.8",
+    "vitest": "^5.1.1"
+  }
+}

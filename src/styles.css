@@ -1,0 +1,143 @@
+.twin-range {
+  --tr-track-height: 4px;
+  --tr-track-color: #e0e0e0;
+  --tr-fill-color: #003dc2;
+  --tr-thumb-size: 24px;
+  --tr-thumb-color: #ffffff;
+  --tr-thumb-border: 2px solid var(--tr-fill-color);
+  --tr-focus-outline: 2px solid #8daee3;
+  --tr-label-bg: #ffffff;
+  --tr-label-color: #339900;
+  --tr-label-border: 1px solid #7d7d7d;
+  --tr-label-font-size: 16px;
+  --tr-label-padding: 3px 6px;
+  --tr-label-radius: 4px;
+  --tr-label-offset: 4px; /* gap between the labels and the top of the thumbs */
+  --tr-label-space: 30px; /* room reserved above the thumbs for the labels */
+  --tr-gutter: 40px; /* side padding, so labels at the ends stay inside the box */
+  --tr-transition: 150ms ease;
+
+  position: relative;
+  box-sizing: border-box;
+  width: 100%;
+  padding: 0 var(--tr-gutter);
+  /* Vertical swipes still scroll the page; horizontal drags move the thumbs. */
+  touch-action: pan-y;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  cursor: pointer;
+}
+
+.twin-range:has(.twin-range__label, .twin-range__bound) {
+  padding-top: var(--tr-label-space);
+}
+
+.twin-range[data-disabled] {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.twin-range__rail {
+  position: relative;
+  height: var(--tr-thumb-size);
+}
+
+/* ---------------- track ---------------- */
+
+.twin-range__track,
+.twin-range__fill {
+  position: absolute;
+  top: 50%;
+  height: var(--tr-track-height);
+  border-radius: var(--tr-track-height);
+  transform: translateY(-50%);
+}
+
+.twin-range__track {
+  left: 0;
+  right: 0;
+  background: var(--tr-track-color);
+}
+
+.twin-range__fill {
+  background: var(--tr-fill-color);
+}
+
+/* ---------------- thumbs ---------------- */
+
+.twin-range__thumb {
+  position: absolute;
+  top: 50%;
+  box-sizing: border-box;
+  width: var(--tr-thumb-size);
+  height: var(--tr-thumb-size);
+  border: var(--tr-thumb-border);
+  border-radius: 50%;
+  background: var(--tr-thumb-color);
+  transform: translate(-50%, -50%);
+  touch-action: none;
+  outline: none;
+}
+
+.twin-range__thumb:focus-visible {
+  outline: var(--tr-focus-outline);
+  outline-offset: 2px;
+}
+
+/* ---------------- labels ---------------- */
+
+.twin-range__label,
+.twin-range__bound {
+  position: absolute;
+  bottom: calc(100% + var(--tr-label-offset));
+  box-sizing: border-box;
+  padding: var(--tr-label-padding);
+  border: var(--tr-label-border);
+  border-radius: var(--tr-label-radius);
+  background: var(--tr-label-bg);
+  color: var(--tr-label-color);
+  font-size: var(--tr-label-font-size);
+  line-height: 1;
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+.twin-range__label {
+  z-index: 2;
+  transform: translateX(-50%);
+  transition:
+    opacity var(--tr-transition),
+    visibility var(--tr-transition),
+    transform var(--tr-transition);
+}
+
+/* Hidden labels stay in layout so their width can still be measured. */
+.twin-range__label[data-hidden] {
+  opacity: 0;
+  visibility: hidden;
+}
+
+.twin-range__label--merged[data-hidden] {
+  transform: translateX(-50%) scale(0.96);
+}
+
+.twin-range__bound {
+  z-index: 1;
+}
+
+.twin-range__bound[data-bound="min"] {
+  left: 0;
+  transform: translateX(-10%);
+}
+
+.twin-range__bound[data-bound="max"] {
+  right: 0;
+  transform: translateX(10%);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .twin-range {
+    --tr-transition: 0ms;
+  }
+}
