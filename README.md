@@ -2,8 +2,16 @@
 
 React dual-thumb range slider with floating value labels that auto-merge on overlap.
 
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/devAIDY/twin-range/main/docs/preview-dark.png" />
+  <img src="https://raw.githubusercontent.com/devAIDY/twin-range/main/docs/preview-light.png" alt="Four twin-range sliders in a flight filter panel: price ($150 to $1,600), departure time (06:00 AM to 06:00 PM), trip duration (5h 0m to 15h 0m), and a layover slider whose two close thumbs share one merged label reading 1h 0m – 2h 0m." width="440" />
+</picture>
+
+To try it yourself, clone the repo and run `npm install && npm run demo`.
+
 - Two thumbs that can't cross, with optional `minDistance`
 - Floating labels that combine into one (`$40 – $55`) when they would collide, and split again when they move apart
+- Ready-made `TimeRange` (`06:00 AM`) and `DurationRange` (`5h 30m`) sliders
 - Optional fixed min/max labels at the ends of the track
 - Pointer, touch and keyboard support (arrows, PageUp/PageDown, Home/End). On touch screens, vertical swipes over the slider still scroll the page.
 - Accessible: each thumb is a `role="slider"` with live `aria-valuemin`/`aria-valuemax` bounds
@@ -64,19 +72,52 @@ Uncontrolled:
 | `showLabels`        | `boolean`                                | `true`                               | Render the floating value labels.                                                     |
 | `showBounds`        | `boolean`                                | `false`                              | Render fixed `min` and `max` labels at the ends of the track (formatted with `formatLabel`). |
 | `formatLabel`       | `(value) => ReactNode`                   | the number                           | Label content. When it returns a string, it's also used as `aria-valuetext`.          |
+| `getAriaValueText`  | `(value) => string`                      | the label text                       | What screen readers announce for a value, when it should differ from the label.       |
 | `formatMergedLabel` | `(low, high) => ReactNode`               | `` `${low} – ${high}` ``             | Content of the merged label. When both values are equal, a single label is shown.     |
 | `mergeGap`          | `number`                                 | `4`                                  | Minimum space in px between the two labels before they merge.                         |
 | `ariaLabel`         | `[string, string]`                       | `["Minimum value", "Maximum value"]` | Accessible names for the thumbs.                                                      |
 | `id`, `className`, `style` |                                   |                                      | Applied to the root element.                                                          |
 
-## Time of day
+## Time and duration sliders
 
-`formatTime` turns minutes since midnight into a 12-hour time (`615` → `"10:15 AM"`):
+Two ready-made sliders for the most common filters. Both take values in **minutes** and accept every `TwinRange` prop, so any default can be overridden.
+
+### `TimeRange`: time of day
+
+Values are minutes since midnight. Labels read `06:00 AM`.
 
 ```tsx
-import { TwinRange, formatTime } from "twin-range";
+import { TimeRange } from "twin-range";
 
-<TwinRange min={0} max={1440} step={15} defaultValue={[360, 1080]} formatLabel={formatTime} />;
+<TimeRange defaultValue={[360, 1080]} onChangeEnd={([from, to]) => filterDepartures(from, to)} />;
+```
+
+Defaults: `min={0}`, `max={1440}`, `step={15}`, thumbs named "Earliest time" and "Latest time".
+
+### `DurationRange`: trip length, layover, and so on
+
+Labels read `5h 30m`, and screen readers hear "5 hours 30 minutes".
+
+```tsx
+import { DurationRange } from "twin-range";
+
+<DurationRange min={60} max={1800} defaultValue={[120, 900]} />;    // trip duration
+<DurationRange min={30} max={720} step={15} minDistance={15} />;     // layover
+```
+
+Defaults: `min={0}`, `max={1440}`, `step={5}`, thumbs named "Minimum duration" and "Maximum duration".
+
+### Formatting helpers
+
+The same formatters are exported for use elsewhere, for example in a summary under the slider:
+
+```ts
+import { formatDuration, formatTime } from "twin-range";
+
+formatTime(615);                // "10:15 AM"
+formatDuration(330);            // "5h 30m"
+formatDuration(45);             // "45m"
+formatDuration(330, "long");    // "5 hours 30 minutes"
 ```
 
 ## Styling
@@ -118,6 +159,7 @@ npm install
 npm test          # vitest + Testing Library
 npm run typecheck
 npm run build     # ESM + CJS + .d.ts into dist/
+npm run demo      # demo page at http://localhost:5173, reloads as you edit src/
 ```
 
 ## License

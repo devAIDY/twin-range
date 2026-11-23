@@ -74,6 +74,25 @@ export function formatTime(minutes: number): string {
   return `${String(h12).padStart(2, "0")}:${String(m).padStart(2, "0")} ${h >= 12 ? "PM" : "AM"}`;
 }
 
+/**
+ * Format a length of time given in minutes.
+ * - `"short"` (default): `330` → `"5h 30m"`, `45` → `"45m"`, `300` → `"5h 0m"`, `0` → `"0h 0m"`
+ * - `"long"`: `330` → `"5 hours 30 minutes"`, `60` → `"1 hour"`, `1` → `"1 minute"`
+ */
+export function formatDuration(minutes: number, style: "short" | "long" = "short"): string {
+  if (!Number.isFinite(minutes)) return "";
+  const total = Math.max(0, Math.round(minutes));
+  const h = Math.floor(total / 60);
+  const m = total % 60;
+  if (style === "long") {
+    const parts: string[] = [];
+    if (h > 0) parts.push(`${h} ${h === 1 ? "hour" : "hours"}`);
+    if (m > 0 || h === 0) parts.push(`${m} ${m === 1 ? "minute" : "minutes"}`);
+    return parts.join(" ");
+  }
+  return h > 0 || m === 0 ? `${h}h ${m}m` : `${m}m`;
+}
+
 export interface Box {
   left: number;
   right: number;

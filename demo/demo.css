@@ -1,0 +1,326 @@
+:root {
+  --sky: #eef2f7;
+  --paper: #ffffff;
+  --ink: #14213d;
+  --ink-soft: #55627a;
+  --rule: #d5dde8;
+  --brand: #003dc2;
+  --price: #16855b;
+  --code-bg: #e3e9f2;
+
+  color-scheme: light;
+}
+
+:root[data-theme="dark"] {
+  --sky: #0d1527;
+  --paper: #152038;
+  --ink: #e6ecf7;
+  --ink-soft: #9aa8c2;
+  --rule: #2a3654;
+  --brand: #7aa2ff;
+  --price: #4cc38a;
+  --code-bg: #1d2a47;
+
+  color-scheme: dark;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--sky);
+  color: var(--ink);
+  font: 400 16px/1.55 "Instrument Sans", system-ui, sans-serif;
+  font-variant-numeric: tabular-nums;
+  -webkit-font-smoothing: antialiased;
+}
+
+.page {
+  max-width: 980px;
+  margin: 0 auto;
+  padding: 56px 24px 96px;
+}
+
+/* ---------------- hero ---------------- */
+
+.hero h1 {
+  margin: 0;
+  font: 700 clamp(56px, 11vw, 120px) / 0.9 "Bricolage Grotesque", system-ui, sans-serif;
+  letter-spacing: -0.045em;
+  color: var(--ink);
+}
+
+.hero .lede {
+  max-width: 34em;
+  margin: 20px 0 24px;
+  font-size: 19px;
+  color: var(--ink-soft);
+}
+
+.install {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 4px 4px 16px;
+  border-radius: 10px;
+  background: var(--code-bg);
+}
+
+.install code {
+  font: 500 15px/1 ui-monospace, "Cascadia Code", Consolas, monospace;
+}
+
+.install code::before {
+  content: "$ ";
+  color: var(--ink-soft);
+}
+
+button,
+.switch input {
+  font: inherit;
+}
+
+.install button {
+  min-width: 76px;
+  padding: 8px 12px;
+  border: 0;
+  border-radius: 7px;
+  background: var(--paper);
+  color: var(--ink);
+  font-weight: 600;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+button:focus-visible,
+.switch input:focus-visible {
+  outline: 2px solid var(--brand);
+  outline-offset: 2px;
+}
+
+.hero-stage {
+  margin: 64px 0 12px;
+}
+
+.hero-hint {
+  margin: 0;
+  color: var(--ink-soft);
+  font-size: 15px;
+}
+
+/* The big slider: same component, restyled only through CSS variables. */
+.twin-range.hero-slider {
+  --tr-track-height: 10px;
+  --tr-track-color: var(--rule);
+  --tr-fill-color: var(--brand);
+  --tr-thumb-size: 36px;
+  --tr-thumb-color: var(--paper);
+  --tr-thumb-border: 4px solid var(--brand);
+  --tr-focus-outline: 3px solid var(--brand);
+  --tr-label-bg: var(--brand);
+  --tr-label-color: var(--paper);
+  --tr-label-border: 0;
+  --tr-label-font-size: 24px;
+  --tr-label-padding: 10px 14px;
+  --tr-label-radius: 10px;
+  --tr-label-offset: 10px;
+  --tr-label-space: 66px;
+  --tr-gutter: 72px;
+
+  font-weight: 600;
+}
+
+/* ---------------- filters + log ---------------- */
+
+.workbench {
+  display: grid;
+  gap: 32px;
+  margin-top: 72px;
+  padding-top: 40px;
+  border-top: 1px solid var(--rule);
+}
+
+@media (min-width: 860px) {
+  .workbench {
+    grid-template-columns: 400px 1fr;
+    gap: 48px;
+  }
+}
+
+.workbench h2 {
+  margin: 0 0 6px;
+  font: 700 28px/1.15 "Bricolage Grotesque", system-ui, sans-serif;
+  letter-spacing: -0.02em;
+}
+
+.workbench .sub {
+  margin: 0 0 20px;
+  color: var(--ink-soft);
+}
+
+.panel {
+  padding: 8px 0;
+  border: 1px solid var(--rule);
+  border-radius: 14px;
+  background: var(--paper);
+}
+
+.filter {
+  padding: 18px 20px 26px;
+}
+
+.filter + .filter {
+  border-top: 1px solid var(--rule);
+}
+
+.filter h3 {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 0 0 6px;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.filter h3 span {
+  font-weight: 400;
+  color: var(--ink-soft);
+}
+
+/* Filter sliders follow the page theme. */
+.panel .twin-range {
+  --tr-track-color: var(--rule);
+  --tr-fill-color: var(--brand);
+  --tr-thumb-color: var(--paper);
+  --tr-label-bg: var(--paper);
+  --tr-label-border: 1px solid var(--rule);
+  --tr-label-font-size: 15px;
+  --tr-label-radius: 6px;
+  --tr-label-padding: 5px 7px;
+  --tr-label-color: var(--ink);
+  --tr-label-space: 34px;
+  --tr-gutter: 36px;
+}
+
+.panel .twin-range.is-price {
+  --tr-label-color: var(--price);
+  font-weight: 600;
+}
+
+.controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 24px;
+  margin-top: 16px;
+}
+
+.switch {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+}
+
+.switch input {
+  width: 18px;
+  height: 18px;
+  margin: 0;
+  accent-color: var(--brand);
+}
+
+/* ---------------- event log ---------------- */
+
+.log {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.log li {
+  display: grid;
+  grid-template-columns: 130px 1fr;
+  gap: 12px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--rule);
+}
+
+.log li:first-child {
+  animation: arrive 400ms ease-out;
+}
+
+.log .what {
+  color: var(--ink-soft);
+}
+
+.log .value {
+  font-weight: 600;
+}
+
+.log li.log-empty {
+  display: block;
+  padding: 12px 0;
+  color: var(--ink-soft);
+  border-bottom: 1px solid var(--rule);
+}
+
+.keys {
+  margin-top: 28px;
+  color: var(--ink-soft);
+  font-size: 15px;
+}
+
+kbd {
+  display: inline-block;
+  min-width: 1.8em;
+  padding: 1px 6px;
+  border: 1px solid var(--rule);
+  border-bottom-width: 2px;
+  border-radius: 5px;
+  background: var(--paper);
+  color: var(--ink);
+  font: 500 13px/1.6 "Instrument Sans", system-ui, sans-serif;
+  text-align: center;
+}
+
+@keyframes arrive {
+  from {
+    background: color-mix(in srgb, var(--brand) 14%, transparent);
+  }
+  to {
+    background: transparent;
+  }
+}
+
+@media (max-width: 600px) {
+  .page {
+    padding: 40px 16px 72px;
+  }
+  .hero-stage {
+    margin-top: 48px;
+  }
+  .twin-range.hero-slider {
+    --tr-label-font-size: 18px;
+    --tr-thumb-size: 30px;
+    --tr-gutter: 48px;
+    --tr-label-space: 56px;
+  }
+  .log li {
+    grid-template-columns: 1fr;
+    gap: 2px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .log li:first-child {
+    animation: none;
+  }
+}
+
+/* ---------------- screenshot mode (?shot) ---------------- */
+
+.shot {
+  width: 440px;
+  padding: 24px;
+}

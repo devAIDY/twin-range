@@ -48,6 +48,11 @@ export interface TwinRangeProps {
   showBounds?: boolean;
   /** Formats a single value for its label (and for `aria-valuetext` when it returns a string). */
   formatLabel?: (value: number) => ReactNode;
+  /**
+   * Text screen readers announce for a value (`aria-valuetext`). Defaults to the label
+   * when `formatLabel` returns a string or number.
+   */
+  getAriaValueText?: (value: number) => string;
   /** Formats the merged label shown when the two labels would overlap. */
   formatMergedLabel?: (low: number, high: number) => ReactNode;
   /** Minimum horizontal gap in px between the two labels before they merge. Default `4`. */
@@ -74,6 +79,7 @@ export function TwinRange({
   showLabels = true,
   showBounds = false,
   formatLabel = defaultFormat,
+  getAriaValueText,
   formatMergedLabel,
   mergeGap = 4,
   ariaLabel = ["Minimum value", "Maximum value"],
@@ -309,7 +315,7 @@ export function TwinRange({
             aria-valuemin={bounds[i][0]}
             aria-valuemax={bounds[i][1]}
             aria-valuenow={current[i]}
-            aria-valuetext={ariaText(labels[i])}
+            aria-valuetext={getAriaValueText ? getAriaValueText(current[i]) : ariaText(labels[i])}
             aria-disabled={disabled || undefined}
             data-active={activeThumb === i || undefined}
             data-thumb={i === 0 ? "low" : "high"}

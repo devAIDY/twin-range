@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { formatTime, labelsCollide, moveThumb, normalizeRange, pickThumb, snapToStep, valueToPercent } from "../src/utils";
+import { formatDuration, formatTime, labelsCollide, moveThumb, normalizeRange, pickThumb, snapToStep, valueToPercent } from "../src/utils";
 
 const opts = { min: 0, max: 100, step: 1, minDistance: 0 };
 
@@ -68,6 +68,23 @@ describe("formatTime", () => {
     expect(formatTime(720)).toBe("12:00 PM");
     expect(formatTime(1439)).toBe("11:59 PM");
     expect(formatTime(Number.NaN)).toBe("");
+  });
+});
+
+describe("formatDuration", () => {
+  it("short style", () => {
+    expect(formatDuration(330)).toBe("5h 30m");
+    expect(formatDuration(300)).toBe("5h 0m");
+    expect(formatDuration(45)).toBe("45m");
+    expect(formatDuration(0)).toBe("0h 0m");
+    expect(formatDuration(89.6)).toBe("1h 30m");
+  });
+
+  it("long style", () => {
+    expect(formatDuration(330, "long")).toBe("5 hours 30 minutes");
+    expect(formatDuration(60, "long")).toBe("1 hour");
+    expect(formatDuration(1, "long")).toBe("1 minute");
+    expect(formatDuration(0, "long")).toBe("0 minutes");
   });
 });
 
