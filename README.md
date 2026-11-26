@@ -9,9 +9,9 @@ React dual-thumb range slider with floating value labels that auto-merge on over
 
 To try it locally, clone the repo and run `npm install && npm run demo`.
 
-The demo can be hosted on [GitHub Pages](https://devaidy.github.io/twin-range/). Once Pages is set
-to use GitHub Actions, pushes to `main` build and publish it automatically. To enable deployment
-in a fork, set **Settings → Pages → Build and deployment → Source** to **GitHub Actions**.
+Try the [live demo](https://devaidy.github.io/twin-range/). Pushes to `main` build and publish it
+automatically through GitHub Pages. To enable deployment in a fork, set **Settings → Pages → Build
+and deployment → Source** to **GitHub Actions**.
 
 - Two thumbs that can't cross, with optional `minDistance`
 - Floating labels that combine into one (`$40 – $55`) when they would collide, and split again when they move apart
