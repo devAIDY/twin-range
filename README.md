@@ -7,7 +7,11 @@ React dual-thumb range slider with floating value labels that auto-merge on over
   <img src="https://raw.githubusercontent.com/devAIDY/twin-range/main/docs/preview-light.png" alt="Four twin-range sliders in a flight filter panel: price ($150 to $1,600), departure time (06:00 AM to 06:00 PM), trip duration (5h 0m to 15h 0m), and a layover slider whose two close thumbs share one merged label reading 1h 0m – 2h 0m." width="440" />
 </picture>
 
-To try it yourself, clone the repo and run `npm install && npm run demo`.
+To try it locally, clone the repo and run `npm install && npm run demo`.
+
+The demo can be hosted on [GitHub Pages](https://devaidy.github.io/twin-range/). Once Pages is set
+to use GitHub Actions, pushes to `main` build and publish it automatically. To enable deployment
+in a fork, set **Settings → Pages → Build and deployment → Source** to **GitHub Actions**.
 
 - Two thumbs that can't cross, with optional `minDistance`
 - Floating labels that combine into one (`$40 – $55`) when they would collide, and split again when they move apart
@@ -164,6 +168,8 @@ npm test          # vitest + Testing Library
 npm run typecheck
 npm run build     # ESM + CJS + .d.ts into dist/
 npm run demo      # demo page at http://localhost:5173, reloads as you edit src/
+npm run build:demo # production demo files in demo/dist/
+npm run preview:demo # preview the production demo locally
 ```
 
 ## License

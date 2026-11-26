@@ -7,6 +7,8 @@ const src = (p: string) => fileURLToPath(new URL(`../src/${p}`, import.meta.url)
 // Point `twin-range` at the source, so edits in src/ hot-reload in the demo.
 export default defineConfig({
   root: fileURLToPath(new URL(".", import.meta.url)),
+  // Relative assets keep the built demo working at GitHub Pages' /twin-range/ path.
+  base: "./",
   plugins: [react()],
   resolve: {
     alias: [
