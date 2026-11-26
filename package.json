@@ -1,6 +1,6 @@
 {
   "name": "twin-range",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "React dual-thumb range slider with floating value labels that merge on overlap, plus ready-made time and duration (layover) sliders",
   "keywords": [
     "react",
