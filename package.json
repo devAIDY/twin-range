@@ -1,6 +1,6 @@
 {
   "name": "twin-range",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "React dual-thumb range slider with floating value labels that merge on overlap, plus ready-made time and duration (layover) sliders",
   "keywords": [
     "react",
@@ -34,7 +34,7 @@
     "type": "git",
     "url": "git+https://github.com/devAIDY/twin-range.git"
   },
-  "homepage": "https://github.com/devAIDY/twin-range#readme",
+  "homepage": "https://devaidy.github.io/twin-range/",
   "bugs": "https://github.com/devAIDY/twin-range/issues",
   "type": "module",
   "main": "./dist/index.cjs",
